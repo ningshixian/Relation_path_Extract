@@ -182,11 +182,8 @@ def article2list(article_list):
         abstracts = article_list[num].get_abstract().get_content().strip('\n')
         article = titles + ' ' + abstracts
         index = search_index(article, 0)
-        try:
-            if article[index + 2] != article[index + 2].lower():
-                sentence_list.append(article[:index + 1])
-        finally:
-            pass
+        if article[index + 2] != article[index + 2].lower():
+            sentence_list.append(article[:index + 1])
         index2 = search_index(article, index + 1)
         while index2 != -1:
             if article[index2 + 2] != article[index2 + 2].lower():
@@ -213,12 +210,12 @@ def findEntityInEachSentence2list(allArticleList):  # article_list
         article = titles + ' ' + abstracts
         # if num == 11:print article
         label_list = allArticleList[num].get_label()
-        index2 = -2
         index = search_index(article, 0)
         if index != -1:
             while article[index + 2] == article[index + 2].lower():
                 index = search_index(article, index + 1)
         number = 1  #The number of words in the sentence
+        index2 = -2
         for i in xrange(len(label_list)):
             docid = label_list[i].get_doc_id()
             start = label_list[i].get_index_start()
@@ -276,9 +273,8 @@ def findEntityInEachSentence2list(allArticleList):  # article_list
             ent = article[start:end]
             entity = ent[0].lower() + ent[1:]  # 2.Let the first letters lowercase
             entity_pair_list.append(str(docid) + "	" + str(start) + "	"
-                                    + str(end) + "	" + entity + "	" + type + "	"
-                                    + ent_id + "	" + str(number) + "	"
-                                    + str(index2) + "	" + str(index))
+                                    + str(end) + "	" + entity + "	" + type + "	" + ent_id + "	" + str(
+                number))
         entity_pairs_list.append(entity_pair_list)
         while index != len(article) - 1 and index != -1:
             index = search_index(article, index + 1)
@@ -298,7 +294,7 @@ def findEntityInEachSentence2list(allArticleList):  # article_list
     # 	print entity_pairss_list[i]
 
 
-def rule1(sj1, entities_in_current_sentence, entityk, existing_relation):
+def rule1(sj1, entities_in_current_sentence, entityk):
     # Determine whether there is a co-occurrence between C and D
     original_type = entityk.split('\t')[4]
     for x in xrange(len(sj1)):
@@ -309,36 +305,39 @@ def rule1(sj1, entities_in_current_sentence, entityk, existing_relation):
         current_id = entityk.split('\t')[5]
         if original_type != next_type:
             if next_entity not in entities_in_current_sentence:
-                if [current_id, next_id] not in existing_relation:
-                    if [next_id, current_id] not in existing_relation:
-                        # 4. Filter the row with the same id.Can not stop?
-                        if original_type == 'Chemical':
-                            relation_l = entityk.split('\t')
-                            relation_r = entitykx.split('\t')
-                        else:
-                            relation_l = entitykx.split('\t')
-                            relation_r = entityk.split('\t')
-                        left_id = relation_l[5]
-                        right_id = relation_r[5]
-                        relation_l = relation_l[0] + '\t' + 'CID' + '\t' + relation_l[1] + '\t' + relation_l[
-                            2] + '\t' + left_id + '\t'
-                        relation_r = relation_r[1] + '\t' + relation_r[2] + '\t' + right_id
-                        inter_sentence_list.append(relation_l)
-                        inter_sentence_list_right.append(relation_r)
-                        existing_relation.append([left_id, right_id])
-                    # else:
-                    # if [current_id, next_id] in existing_relation:
-                    # 		relation_l = relation_l[0] + '\t' + 'CID' + '\t' + relation_l[1] + '\t' + relation_l[2] + '\t' + \
-                    # 					 current_id + '\t'
-                    # 		relation_r = relation_r[1] + '\t' + relation_r[2] + '\t' + next_id
-                    # 	else:
-                    # 		relation_l = relation_l[0] + '\t' + 'CID' + '\t' + relation_l[1] + '\t' + relation_l[2] + '\t' + \
-                    # 					 next_id + '\t'
-                    # 		relation_r = relation_r[1] + '\t' + relation_r[2] + '\t' + current_id
-                    # 	inter_sentence_list_right.remove(relation_r)
-                    # 	inter_sentence_list.remove(relation_l)
-                    # 	inter_sentence_list_right.append(relation_l)
-                    # 	inter_sentence_list_right.append(relation_r)
+                if inter_sentence_list == []:
+                    if original_type == 'Chemical':
+                        relation_l = entityk.split('\t')
+                        relation_r = entitykx.split('\t')
+                    else:
+                        relation_l = entitykx.split('\t')
+                        relation_r = entityk.split('\t')
+                    relation_l = relation_l[0] + '\t' + 'CID' + '\t' + relation_l[1] + '\t' + relation_l[2] + '\t' + \
+                                 relation_l[-2] + '\t'
+                    relation_r = relation_r[1] + '\t' + relation_r[2] + '\t' + relation_r[-2]
+                    inter_sentence_list.append(relation_l)
+                    inter_sentence_list_right.append(relation_r)
+                else:
+                    # 4. Filter the row with the same id.Can not stop?
+                    temp = []
+                    for i in xrange(len(inter_sentence_list)):
+                        chem_id = inter_sentence_list[i].split('\t')[4]
+                        dis_id = inter_sentence_list_right[i].split('\t')[2]
+                        temp.append([chem_id, dis_id])
+                    if [current_id, next_id] not in temp:
+                        if [next_id, current_id] not in temp:
+                            if original_type == 'Chemical':
+                                relation_l = entityk.split('\t')
+                                relation_r = entitykx.split('\t')
+                            else:
+                                relation_l = entitykx.split('\t')
+                                relation_r = entityk.split('\t')
+                            relation_l = relation_l[0] + '\t' + 'CID' + '\t' + relation_l[1] + '\t' + relation_l[
+                                2] + '\t' + relation_l[-2] + '\t'
+                            relation_r = relation_r[1] + '\t' + relation_r[2] + '\t' + relation_r[-2]
+                            inter_sentence_list.append(relation_l)
+                            inter_sentence_list_right.append(relation_r)
+                        # existing_relation.append([left_id, right_id])
             else:
                 continue  # cooccurrence
         else:
@@ -362,6 +361,7 @@ def rule2(current_sentence, article):  # 3. find later two sentence:set distance
 
 def inter_sentence_match(entity_pairss_list):
     existing_relation = []
+    # print entity_pairss_list[79][0][0].split('\t')[0]	########19308880
     for i in xrange(len(entity_pairss_list)):
         article_level_entity = entity_pairss_list[i]
         # if i==79: print article_level_entity
@@ -379,9 +379,12 @@ def inter_sentence_match(entity_pairss_list):
             for k in xrange(len(sentence_level_entity)):
                 entityk = sentence_level_entity[k]
                 # if i == 79: print entityk
-                rule1(sj1, entities_in_sentence, entityk, existing_relation)
-                rule1(sj2, entities_in_sentence, entityk, existing_relation)
+                rule1(sj1, entities_in_sentence, entityk)
+                rule1(sj2, entities_in_sentence, entityk)
         existing_relation = []  # not sure!!
+
+    for i in xrange(len(inter_sentence_list)):
+        print inter_sentence_list[i] + '\t' + inter_sentence_list_right[i]
 
 
 def get_relation_sentence(inter_sentence_list):
@@ -404,7 +407,7 @@ def get_relation_sentence(inter_sentence_list):
         if doc_in not in doc_id:
             print str(j) + '	' + doc_in
             relation_l = 'dontknow' + '\t' + 'CID' + '\t' + '11' + '\t' + '22' + '\t' + '-22' + '\t'
-            relation_r = '00' + '\t' + '22' + '\t' + '0'
+            relation_r = '00' + '\t' + '22' + '\t' + '-22'
             # inter_sentence_list.insert(j, relation_l)
             # inter_sentence_list_right.insert(j, relation_r)
             relation_lists.insert(j, [relation_l + relation_r])
@@ -414,22 +417,9 @@ def result_of_extraction():
     good_entity = []
     good_relation = []
 
-    def get_start_list(entity_pair_list, mark, length):
+    def get_start_list(entity_pair_list):
         for a in xrange(len(entity_pair_list)):
-            list = entity_pair_list[a].split('\t')
-            if mark == 0:
-                start = int(list[1]) - int(list[-2]) - 2
-                # end = int(list[2]) - int(list[-2]) - 3
-                end = int(list[2]) - int(list[-2]) - 2
-                entity = list[0] + '\t' + str(start) + '\t' + str(end) + '\t' + \
-                         list[3] + '\t' + list[4] + '\t' + list[5] + '\t' + list[6]
-            else:
-                start = str(int(list[1]) - int(list[-2]) + length)
-                # end = str(int(list[2]) - int(list[-2]) - 1 + length)
-                end = str(int(list[2]) - int(list[-2]) + length)
-                entity = list[0] + '\t' + start + '\t' + end + '\t' + \
-                         list[3] + '\t' + list[4] + '\t' + list[5] + '\t' + list[6]
-            good_entity.append('Entity: ' + entity + '\n')
+            good_entity.append('Entity: ' + str(entity_pair_list[a]) + '\n')
             start_index = str(entity_pair_list[a]).split('\t')[1]
             start_list.append(start_index)
 
@@ -478,13 +468,10 @@ def result_of_extraction():
             for i in xrange(len(sentence_list)):
                 if i + 2 < len(sentence_list):
                     for j in range(i + 1, i + 3):
-                        if entity_pairss_list[num][i] == [] or entity_pairss_list[num][j] == []:
+                        if entity_pairss_list[num][i] == [] and entity_pairss_list[num][j] == []:
                             continue
-                        a = entity_pairss_list[num][i]
-                        b = entity_pairss_list[num][j]
-                        lenghth = int(a[0].split('\t')[-1]) - int(a[0].split('\t')[-2]) - 2
-                        get_start_list(a, 0, 0)
-                        get_start_list(b, j - i, lenghth)
+                        get_start_list(entity_pairss_list[num][i])
+                        get_start_list(entity_pairss_list[num][j])
                         # print good_entity
                         if judge_relation(relation_lists[num], true_relation) == []:
                             start_list = []
@@ -502,13 +489,10 @@ def result_of_extraction():
                         f.write('\n')
 
                 elif i + 1 < len(sentence_list):
-                    if entity_pairss_list[num][i] == [] or entity_pairss_list[num][i + 1] == []:
+                    if entity_pairss_list[num][i] == [] and entity_pairss_list[num][i + 1] == []:
                         continue
-                    a = entity_pairss_list[num][i]
-                    b = entity_pairss_list[num][i + 1]
-                    lenghth = int(a[0].split('\t')[-1]) - int(a[0].split('\t')[-2]) - 2
-                    get_start_list(a, 0, 0)
-                    get_start_list(b, 1, lenghth)
+                    get_start_list(entity_pairss_list[num][i])
+                    get_start_list(entity_pairss_list[num][i + 1])
                     # print good_entity
                     if judge_relation(relation_lists[num], true_relation) == []:
                         start_list = []
@@ -527,11 +511,10 @@ def result_of_extraction():
                     continue
 
 # read('s.txt')
-read('test.txt')
+# read('test.txt')
 # read('test1.txt')
 # read('test2.txt')
-# read('F:\Python Location\untitled\CDR_TrainDevSet.PubTabor.txt')
-# read('F:\Python Location\untitled\CDR_TestSet.PubTator.txt')
+read('F:\Python Location\untitled\CDR_TrainDevSet.PubTabor.txt')
 # write(article_list, 'f.txt')
 article2list(article_list)
 findEntityInEachSentence2list(article_list)
@@ -549,3 +532,5 @@ with open('inter_relation.txt', 'w+') as ie:
     for i in xrange(len(relation_lists)):
         ie.write(str(relation_lists[i]) + '\n')
         #lack of 19308880 relation??
+
+

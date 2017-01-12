@@ -85,7 +85,7 @@ def get_pos_word(file):
         words.append(w)
         position.append(p)
     # for i in range(len(lines)):
-    #     line = lines[i]
+    # line = lines[i]
     #     # print "number: %3s word: %12s  depend: %3s style: %5s" % (line[0], line[1], line[-2], line[-1])
     #     words.append(line[1])
     #     position.append(line[-2])
@@ -127,7 +127,8 @@ def construct_tree(words, position):
 
 def get_all_sentences(file):
     sentences = []  # 存放语料的所有句子
-    word_pair = []
+    word_pair = []  # 存放句子中有关系的实体对
+    flags = []  # 存放实体对的关系的真假标签
     rows = count_lines(file)
     with open(file) as f:
         first_line = f.readline()
@@ -137,6 +138,7 @@ def get_all_sentences(file):
         line.append('.')
         sentences.append(line)
         word = []
+        flag = []
         while True:
             line = f.readline()
             if not line: break
@@ -147,18 +149,23 @@ def get_all_sentences(file):
                     row = line.split()
                     w1 = first_line[int(row[3]) + 10:int(row[4]) + 10]
                     w2 = first_line[int(row[6]) + 10:int(row[7]) + 10]
+                    flag.append(row[-1])
                     word.append([w1, w2])
             else:
+                flags.append(flag)
                 word_pair.append(word)
+                flag = []
                 word = []
                 first_line = f.readline()
                 line = first_line.split()
                 line[len(line) - 1] = line[len(line) - 1][:-1]  # list index out of range
                 line.append('.')
                 sentences.append(line)
+        flags.append(flag)
         word_pair.append(word)
-    return sentences, word_pair
+    return sentences, word_pair, flags
+
 
 if __name__ == "__main__":
     # 从file中获取所有的句子，存至sentences数组中
-    sentences, word_pair = get_all_sentences(r'corpus/CDR_TrainSentence.txt')
+    sentences, word_pair, flags = get_all_sentences(r'corpus/CDR_TrainSentence.txt')
