@@ -3,8 +3,10 @@
 # coding=utf-8
 import function
 
-depend_file = r'corpus/train/train_One.gdep'
-train_file = r'corpus/train/CDR_Train_One.txt'
+# depend_file = r'corpus/train/train_One.gdep'
+# train_file = r'corpus/train/CDR_Train_One.txt'
+train_file = r'corpus/train/CDR_TrainSentence.txt'
+depend_file = r'corpus/train/train.gdep'
 
 
 # 从 train_One.gdep 文件中，读取出所有单词和它所依赖的单词的数组下标
@@ -60,19 +62,20 @@ def GetLastCommonAncestor(w1, w2, flag, tree):
     len1 = Hight(node1)
     len2 = Hight(node2)
     while len1 > len2:
-        left_path.append(node1.value + '↑')
+        left_path.append(node1.value + ' ↑ ')
         node1 = node1.parent
         len1 -= 1
     while len1 < len2:
-        right_path.append('↓' + node2.value)
+        right_path.append(' ↓ ' + node2.value)
         node2 = node2.parent
         len2 -= 1
 
     while node1 and node2 and node1 != node2:
-        left_path.append(node1.value + '↑')
-        right_path.append('↓' + node2.value)
+        left_path.append(node1.value + ' ↑ ')
+        right_path.append(' ↓ ' + node2.value)
         node1 = node1.parent
         node2 = node2.parent
+
 
     if node1 == node2 and node1 not in [None]:
         left_path.append(node1.value)  # 根节点进来
@@ -82,9 +85,9 @@ def GetLastCommonAncestor(w1, w2, flag, tree):
         relation = ''
         for i in range(len(left_path)):
             relation += left_path[i]
-        print ('0' if flag == 'false' else '1') + '  %s 和 %s 的依赖关系是:  %s' % (w1, w2, relation)
+        return ('0' if flag == 'false' else '1') + '\t' + relation
     else:
-        print ('0' if flag == 'false' else '1') + '  %s 和 %s :no common parent!!' % (word1, word2)
+        return ('0' if flag == 'false' else '1') + '\t' + 'no common parent!!'
 
 
 '''
@@ -137,14 +140,17 @@ def get_relation_path(w1, w2, node):
 
 
 def main():
-    for i in range(len(word_pair)):
-        tree = trees[i]
-        for j in range(len(word_pair[i])):
-            w1, w2 = word_pair[i][j]
-            flag = flags[i][j]
-            # get_relation_path(w1, w2, node)
-            GetLastCommonAncestor(w1, w2, flag, tree)
-        print '\n'
+    with open('result.txt','w') as result:
+        for i in range(len(word_pair)):
+            tree = trees[i]
+            for j in range(len(word_pair[i])):
+                w1, w2 = word_pair[i][j]
+                flag = flags[i][j]
+                # get_relation_path(w1, w2, node)
+                path = GetLastCommonAncestor(w1, w2, flag, tree)
+                # print ('0' if flag == 'false' else '1') + '  %s 和 %s 的依赖关系是:  %s' % (w1, w2, path)
+                result.write(path+'\n')
+            result.write('\n')
 
 
 if __name__ == "__main__":

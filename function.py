@@ -158,7 +158,10 @@ def get_all_sentences(file):
                 word = []
                 first_line = f.readline()
                 line = first_line.split()
-                line[len(line) - 1] = line[len(line) - 1][:-1]  # list index out of range
+                try:
+                    line[len(line) - 1] = line[len(line) - 1][:-1]  # list index out of range
+                except:
+                    pass
                 line.append('.')
                 sentences.append(line)
         flags.append(flag)
